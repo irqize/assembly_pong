@@ -23,40 +23,117 @@ along with gamelib-x64. If not, see <http://www.gnu.org/licenses/>.
 .global gameLoop
 
 .section .game.data
+	window_height: .quad 25
+	window_width: .quad 80
+
 	x: .quad 0
 	y: .quad 0
+
+	i: .quad 0
+	j: .quad 0
 
 .section .game.text
 
 gameInit:
+	call clear_screen
+	call draw_board
+	movq $40, %rdi
+	movq $13, %rsi
+	call draw_ball
 	ret
 
 gameLoop:
-	# 80x25
-	xor %rcx, %rcx
-lx:
-	movq	%rcx, (x)
-	movb	$'X', %dl
-	movq	%rcx, %rdi
-	movq	$0, %rsi
-	movb	(x), %cl
-	call	putChar
-	movq	(x), %rcx
-	incq %rcx
-	cmpq	$80, %rcx 
-	jl lx
+	ret
 
-	xor %rcx, %rcx
-ly:
-	movq	%rcx, (y)
-	movb	$'Y', %dl
-	movq	$0, %rdi
-	movq	%rcx, %rsi
-	movb	(y), %cl
-	call	putChar
-	movq	(y), %rcx
-	incq %rcx
-	cmpq	$25, %rcx 
-	jl ly
+# void()/makes screen black
+clear_screen:
+	movq $0, %r8
+	movq $0, %r9
+_clear_screen:
+	movq %r8, (x)
+	movq %r9, (y)
+
+	movb $' ', %dl
+	movq (x), %rdi
+	movq (y), %rsi
+	movb $0, %cl
+	call putChar
+
+	movq (x), %r8
+	incq %r8
+	cmpq $80, %r8
+	jl _clear_screen
+
+	movq $0, (x)
+	movq $0, %r8
+
+	movq (y), %r9
+	incq %r9
+	cmpq $24, %r9
+	jl _clear_screen
+
+	ret
+
+# void()/draws pong's board
+draw_board:
+	#horizontal lines
+	movq $1, %r8
+_draw_board_h:
+	movq %r8, (x)
+	movb $' ', %dl
+	movq (x), %rdi
+	movq $1, %rsi
+	movb $255, %cl
+	call putChar
+
+	movb $' ', %dl
+	movq (x), %rdi
+	movq $23, %rsi
+	movb $255, %cl
+	call putChar
+
+	movq (x), %r8
+	incq %r8
+	cmpq $79, %r8
+	jl _draw_board_h
+
+	movq $1, %r9
+_draw_board_v:
+	movq %r9, (y)
+	movb $' ', %dl
+	movq $1, %rdi
+	movq (y), %rsi
+	movb $255, %cl
+	call putChar
+
+	movb $' ', %dl
+	movq $78, %rdi
+	movq (y), %rsi
+	movb $255, %cl
+	call putChar
+
+	movq (y), %r9
+	incq %r9
+	cmpq $24, %r9
+	jl _draw_board_v
+
+	ret
+# void(int x, int y)/draws ball at position (x, y), ball size is 1x2
+draw_ball:
+	movq %rdi, (x)
+	movq %rsi, (y)
+
+	movb $' ', %dl
+	movb $255, %cl
+	call putChar
+
+	movq (x), %rdi
+	movq (y), %rsi
+
+	incq %rdi
+
+	movb $' ', %dl
+	movb $255, %cl
+	call putChar
 
 	ret
