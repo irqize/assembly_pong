@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with gamelib-x64. If not, see <http://www.gnu.org/licenses/>.
 */
-
+#every 17th color from zero is fully drawn (no character seen)
 .file "src/game/game.s"
 
 .global gameInit
@@ -26,8 +26,16 @@ along with gamelib-x64. If not, see <http://www.gnu.org/licenses/>.
 	window_height: .quad 25
 	window_width: .quad 80
 
+	pad1_y: .quad 13
+	pad2_y: .quad 13
+
+	ball_x: .quad 40
+	ball_y: .quad 13
+
 	x: .quad 0
 	y: .quad 0
+
+	
 
 	i: .quad 0
 	j: .quad 0
@@ -37,9 +45,8 @@ along with gamelib-x64. If not, see <http://www.gnu.org/licenses/>.
 gameInit:
 	call clear_screen
 	call draw_board
-	movq $40, %rdi
-	movq $13, %rsi
 	call draw_ball
+	call draw_pads
 	ret
 
 gameLoop:
@@ -97,43 +104,83 @@ _draw_board_h:
 	cmpq $79, %r8
 	jl _draw_board_h
 
-	movq $1, %r9
+	movq $2, %r9
 _draw_board_v:
 	movq %r9, (y)
 	movb $' ', %dl
 	movq $1, %rdi
 	movq (y), %rsi
-	movb $255, %cl
+	movb $153, %cl
 	call putChar
 
-	movb $' ', %dl
+	movb $'0', %dl
 	movq $78, %rdi
 	movq (y), %rsi
-	movb $255, %cl
+	movb $68, %cl
 	call putChar
 
 	movq (y), %r9
 	incq %r9
-	cmpq $24, %r9
+	cmpq $23, %r9
 	jl _draw_board_v
 
 	ret
 # void(int x, int y)/draws ball at position (x, y), ball size is 1x2
 draw_ball:
-	movq %rdi, (x)
-	movq %rsi, (y)
+	movq (ball_x) ,%rdi
+	movq (ball_y) ,%rsi
 
 	movb $' ', %dl
 	movb $255, %cl
 	call putChar
 
-	movq (x), %rdi
-	movq (y), %rsi
-
+	movq (ball_x) ,%rdi
+	movq (ball_y) ,%rsi
 	incq %rdi
 
 	movb $' ', %dl
 	movb $255, %cl
 	call putChar
 
+	ret
+
+# void()/draw pads at given heights
+draw_pads:
+	#left pad
+	movb $' ', %dl
+	movq $3, %rdi
+	movq (pad1_y), %rsi
+	movb $255, %cl
+	call putChar
+	movb $' ', %dl
+	movq $3, %rdi
+	movq (pad1_y), %rsi
+	decq %rsi
+	movb $255, %cl
+	call putChar
+	movb $' ', %dl
+	movq $3, %rdi
+	movq (pad1_y), %rsi
+	incq %rsi
+	movb $255, %cl
+	call putChar
+
+	#right pad
+	movb $' ', %dl
+	movq $76, %rdi
+	movq (pad2_y), %rsi
+	movb $255, %cl
+	call putChar
+	movb $' ', %dl
+	movq $76, %rdi
+	movq (pad2_y), %rsi
+	decq %rsi
+	movb $255, %cl
+	call putChar
+	movb $' ', %dl
+	movq $76, %rdi
+	movq (pad2_y), %rsi
+	incq %rsi
+	movb $255, %cl
+	call putChar
 	ret
