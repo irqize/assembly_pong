@@ -1,21 +1,3 @@
-/*
-This file is part of gamelib-x64.
-
-Copyright (C) 2014 Tim Hegeman
-
-gamelib-x64 is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-gamelib-x64 is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with gamelib-x64. If not, see <http://www.gnu.org/licenses/>.
-*/
 #every 17th color from zero is fully drawn (no character seen)
 .file "src/game/game.s"
 
@@ -32,10 +14,11 @@ along with gamelib-x64. If not, see <http://www.gnu.org/licenses/>.
 	ball_x: .quad 40
 	ball_y: .quad 13
 
+	player1_life: .quad 11
+	player2_life: .quad 11
+
 	x: .quad 0
 	y: .quad 0
-
-	
 
 	i: .quad 0
 	j: .quad 0
@@ -47,6 +30,7 @@ gameInit:
 	call draw_board
 	call draw_ball
 	call draw_pads
+	call draw_life_bars
 	ret
 
 gameLoop:
@@ -125,7 +109,7 @@ _draw_board_v:
 	jl _draw_board_v
 
 	ret
-# void(int x, int y)/draws ball at position (x, y), ball size is 1x2
+# void()/draws ball at position (ball_x, ball_y), ball size is 1x2
 draw_ball:
 	movq (ball_x) ,%rdi
 	movq (ball_y) ,%rsi
@@ -144,7 +128,7 @@ draw_ball:
 
 	ret
 
-# void()/draw pads at given heights
+# void()/draw pads at (3, pad1_y) and (76, pad2_y) width 3
 draw_pads:
 	#left pad
 	movb $' ', %dl
@@ -183,4 +167,90 @@ draw_pads:
 	incq %rsi
 	movb $255, %cl
 	call putChar
+	ret
+
+# void()/
+draw_life_bars:
+	movq $1, %r8
+	movq $1, (x)
+_draw_life_bars_left:
+	movq (x), %r8
+
+	movq (player1_life), %rdi
+	movq %r8, %rsi
+	call life_to_color
+	movq %r8, %rdi
+	movq $0, %rsi
+	movb %al, %cl
+	call putChar
+
+	incq %r8
+	movq %r8, (x)
+	cmpq $11, %r8
+	jle _draw_life_bars_left
+
+	movq $1, %r8
+	movq $1, (x)
+_draw_life_bars_right:
+	movq (x), %r8
+
+	movq (player2_life), %rdi
+	movq %r8, %rsi
+	call life_to_color
+	movq $79, %rdi
+	subq %r8, %rdi
+	movq $0, %rsi
+	movb %al, %cl
+	call putChar
+
+	incq %r8
+	movq %r8, (x)
+	cmpq $11, %r8
+	jle _draw_life_bars_right
+	ret
+
+# int(int life, int pos)
+life_to_color:
+	cmpq %rdi, %rsi
+	jg _life_to_color_black
+
+	cmpq $0, %rdi
+	je _life_to_color_black
+
+	cmpq $2, %rsi
+	jle _life_to_color_red
+
+	cmpq $4, %rsi
+	jle _life_to_color_lred
+
+	cmpq $6, %rsi
+	jle _life_to_color_yellow
+
+	cmpq $8, %rsi
+	jle _life_to_color_lgreen
+
+	jmp _life_to_color_green
+
+_life_to_color_red:
+	movb $68, %al
+	ret
+
+_life_to_color_lred:
+	movb $204, %al
+	ret
+
+_life_to_color_yellow:
+	movb $238, %al
+	ret
+
+_life_to_color_lgreen:
+	movb $170, %al
+	ret
+
+_life_to_color_green:
+	movb $34, %al
+	ret
+
+_life_to_color_black:
+	movb $0, %al
 	ret
