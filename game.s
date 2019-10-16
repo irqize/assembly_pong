@@ -5,6 +5,12 @@
 .global gameLoop
 
 .section .game.data
+	#Game State Codes
+	# 0 - MENU
+	# 1 - IN GAME PLAYER VS PLAYER
+	# 2 - IN GAME PLAYER VS COMPUTER
+	game_state: .quad 1
+	
 	window_height: .quad 25
 	window_width: .quad 80
 
@@ -34,6 +40,7 @@ gameInit:
 	ret
 
 gameLoop:
+	call handleGameControls
 	ret
 
 # void()/makes screen black
@@ -62,6 +69,38 @@ _clear_screen:
 	incq %r9
 	cmpq $24, %r9
 	jl _clear_screen
+
+	ret
+
+# void()/makes board black
+reset_board:
+	movq $2, %r8
+	movq $2, %r9
+_reset_board:
+	movq %r8, (x)
+	movq %r9, (y)
+
+	movb $' ', %dl
+	movq (x), %rdi
+	movq (y), %rsi
+	movb $0, %cl
+	call putChar
+
+	movq (x), %r8
+	incq %r8
+	cmpq $78, %r8
+	jl _reset_board
+
+	movq $3, (x)
+	movq $3, %r8
+
+	movq (y), %r9
+	incq %r9
+	cmpq $23, %r9
+	jl _reset_board
+
+	call draw_ball
+	call draw_pads
 
 	ret
 
@@ -254,3 +293,66 @@ _life_to_color_green:
 _life_to_color_black:
 	movb $0, %al
 	ret
+
+handleGameControls:
+	call readKeyCode
+	#arrow up check
+	cmpq $72, %rax
+	jne _handleGameControls_ad
+	jmp handleArrowUp
+	#arrow down check
+_handleGameControls_ad:
+	cmpq $80, %rax
+	jne _handleGameControls_w
+	jmp handleArrowDown
+
+	cmpq $1, (game_state)
+	jne _handleGameControls_end
+	#W check
+_handleGameControls_w:
+	cmpq $17, %rax
+	jne _handleGameControls_s
+	jmp handleW
+
+	#S check
+_handleGameControls_s:
+	cmpq $31, %rax
+	jne _handleGameControls_end
+	jmp handleS
+
+_handleGameControls_end:
+	ret
+
+handleArrowUp:
+	cmpq $3 ,(pad2_y)
+	jle _handleArrowUp
+	decq (pad2_y)
+	call reset_board
+_handleArrowUp:
+	ret
+
+handleArrowDown:
+	cmpq $21 ,(pad2_y)
+	jge _handleArrowDown
+	incq (pad2_y)
+	call reset_board
+_handleArrowDown:
+	ret
+
+
+handleW:
+	cmpq $3 ,(pad1_y)
+	jle _handleW
+	decq (pad1_y)
+	call reset_board
+_handleW:
+	ret
+
+handleS:
+	cmpq $21 ,(pad1_y)
+	jge _handleS
+	incq (pad1_y)
+	call reset_board
+_handleS:
+	ret
+
