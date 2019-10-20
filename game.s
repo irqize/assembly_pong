@@ -17,8 +17,8 @@
 	pad1_y: .quad 13
 	pad2_y: .quad 13
 
-	pad1_speed: .quad 0 #0-2
-	pad2_speed: ,quad 0 #0-2
+	pad1_speed: .quad 0 #0-4
+	pad2_speed: .quad 0 #0-4
 
 
 	#TODO: ball_speed
@@ -54,6 +54,10 @@
 .section .game.text
 
 gameInit:
+#set timer to 4hz
+	movq $298295, %rdi
+	call setTimer
+
 	call clear_screen
 	call draw_board
 	call draw_ball
@@ -63,6 +67,8 @@ gameInit:
 
 gameLoop:
 	call handleGameControls
+	call calculate_pad_pos
+	call reset_board
 	ret
 
 # void()/makes screen black
@@ -343,38 +349,94 @@ _handleGameControls_s:
 	jmp handleS
 
 _handleGameControls_end:
-	ret
+	jmp handleNoControlsUsed
 
 handleArrowUp:
-	cmpq $3 ,(pad2_y)
-	jle _handleArrowUp
-	decq (pad2_y)
-	call reset_board
+	decq (pad2_speed)
+	cmpq $-4, (pad2_speed)
+	jge _handleArrowUp
+	movq $-4, (pad2_speed) 
 _handleArrowUp:
 	ret
 
 handleArrowDown:
-	cmpq $21 ,(pad2_y)
-	jge _handleArrowDown
-	incq (pad2_y)
-	call reset_board
+	incq (pad2_speed)
+	cmpq $4, (pad2_speed)
+	jle _handleArrowDown
+	movq $4, (pad2_speed) 
 _handleArrowDown:
 	ret
 
 
 handleW:
-	cmpq $3 ,(pad1_y)
-	jle _handleW
-	decq (pad1_y)
-	call reset_board
+	decq (pad1_speed)
+	cmpq $-4, (pad1_speed)
+	jge _handleW
+	movq $-4, (pad1_speed) 
 _handleW:
 	ret
 
 handleS:
-	cmpq $21 ,(pad1_y)
-	jge _handleS
-	incq (pad1_y)
-	call reset_board
+	incq (pad1_speed)
+	cmpq $4, (pad1_speed)
+	jle _handleS
+	movq $4, (pad1_speed) 
 _handleS:
 	ret
 
+#void()
+handleNoControlsUsed:
+	cmpq $0, (pad1_speed)
+	je _handleNoControlsUsed_pad2
+	cmpq $0, (pad1_speed)
+	jl _handleNoControlsUsed_pad1_a
+	decq (pad1_speed)
+	jmp _handleNoControlsUsed_pad2
+_handleNoControlsUsed_pad1_a:
+	incq (pad1_speed)
+_handleNoControlsUsed_pad2:
+	cmpq $0, (pad2_speed)
+	je _handleNoControlsUsed_end
+	cmpq $0, (pad2_speed)
+	jl _handleNoControlsUsed_pad2_a
+	decq (pad2_speed)
+	jmp _handleNoControlsUsed_end
+_handleNoControlsUsed_pad2_a:
+	incq (pad2_speed)
+_handleNoControlsUsed_end:
+	ret
+
+#void()
+calculate_pad_pos:
+	movq (pad1_speed), %rax
+	movq (pad1_y), %rdi
+	addq %rax, %rdi
+	movq %rdi, (pad1_y)
+	movq (pad2_speed), %rax
+	movq (pad2_y), %rdi
+	addq %rax, %rdi
+	movq %rdi, (pad2_y)
+	
+	
+
+	cmpq $21 ,(pad1_y)
+	jl calculate_pad_pos_1up
+	movq $21, (pad1_y)
+	movq $0, (pad1_speed)
+calculate_pad_pos_1up:
+	cmpq $3 ,(pad1_y)
+	jg calculate_pad_pos_2down
+	movq $3, (pad1_y)
+	movq $0, (pad1_speed)
+calculate_pad_pos_2down:
+	cmpq $21 ,(pad2_y)
+	jl calculate_pad_pos_2up
+	movq $21, (pad2_y)
+	movq $0, (pad2_speed)
+calculate_pad_pos_2up:
+	cmpq $3 ,(pad2_y)
+	jg calculate_pad_pos_end
+	movq $3, (pad2_y)
+	movq $0, (pad2_speed)
+calculate_pad_pos_end:
+	ret
