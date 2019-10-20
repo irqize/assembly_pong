@@ -28,20 +28,18 @@
 
 	
 	#n  x  y
-	#1 +1 +2 not used
-	#2 +2 +1
-	#3 +2  0
-	#4 +2 -1
-	#5 +1 -2 not used
 
-	#6 -1 +2 not used
-	#7 -2 +1
-	#8 -2  0
-	#9 -2 -1
-	#10-1 -2 not used
-	ball_direction: .quad 3
-	#1-5 going right 6-10 going left
-	last_ball_direction: .quad 3
+	#1 +2 +1
+	#2 +2  0
+	#3 +2 -1
+
+	#4 -2 +1
+	#5 -2  0
+	#6 -2 -1
+
+	ball_direction: .quad 2
+	#1-3 going right 4-6 going left
+	last_ball_direction: .quad 2
 
 	player1_life: .quad 11
 	player2_life: .quad 11
@@ -76,20 +74,20 @@ gameLoop:
 newPoint:
 	movq $0, (ball_x)
 	movq $0, (ball_y)
-	movq $13, (pad1_x)
 	movq $13, (pad1_y)
+	movq $13, (pad2_y)
 	movq $0, (pad1_speed)
 	movq $0, (pad2_speed)
 	movq (last_ball_direction), %rax
-	addq %rax
-	cmp $10, %rax
+	incq %rax
+	cmp $6, %rax
 	jle _newPoint
 	movq $1, %rax
 _newPoint: 
 	movq %rax, (last_ball_direction)
 	movq %rax, (ball_direction)
 	call draw_life_bars
-	call
+	ret
 
 
 # void()/makes screen black
@@ -476,96 +474,51 @@ handle_ball:
 	je _handle_ball_5
 	cmpq $6, (ball_direction)
 	je _handle_ball_6
-	cmpq $7, (ball_direction)
-	je _handle_ball_7
-	cmpq $8, (ball_direction)
-	je _handle_ball_8
-	cmpq $9, (ball_direction)
-	je _handle_ball_9
-	cmpq $10, (ball_direction)
-	je _handle_ball_10
+
 
 	ret
 
-_handle_ball_1: #+1 +2
-	incq (ball_x)
-	incq (ball_y)
-	incq (ball_y)
-	jmp ball_check
 
-_handle_ball_2: #+2 +1
+_handle_ball_1: #+2 +1
 	incq (ball_x)
 	incq (ball_x)
 	incq (ball_y)
 	jmp ball_check
 
-_handle_ball_3: #+2 0
+_handle_ball_2: #+2 0
 	incq (ball_x)
 	incq (ball_x)
 	jmp ball_check
 
-_handle_ball_4:#+2 -1
+_handle_ball_3:#+2 -1
 	incq (ball_x)
 	incq (ball_x)
 	decq (ball_y)
 	jmp ball_check
 
-_handle_ball_5:#+1 -2
-	incq (ball_x)
-	decq (ball_y)
-	decq (ball_y)
-	jmp ball_check
-
-_handle_ball_6: #-1 +2
-	decq (ball_x)
-	incq (ball_y)
-	incq (ball_y)
-	jmp ball_check
-
-_handle_ball_7: #-2 +1
+_handle_ball_4: #-2 +1
 	decq (ball_x)
 	decq (ball_x)
 	incq (ball_y)
 	jmp ball_check
 
-_handle_ball_8: #-2 0
+_handle_ball_5: #-2 0
 	decq (ball_x)
 	decq (ball_x)
 	jmp ball_check
 
-_handle_ball_9:#-2 -1
+_handle_ball_6:#-2 -1
 	decq (ball_x)
 	decq (ball_x)
 	decq (ball_y)
 	jmp ball_check
 
-_handle_ball_10:#-1 -2
-	decq (ball_x)
-		ret
-	decq (ball_y)
-	decq (ball_y)
-	jmp ball_check
+
 
 ball_check:
 	call bounce_check
-	call point_check
 	ret
 
-point_check:
-	#check if p1 scored
-	cmpq $76, (ball_x)
-	jl _ball_check_p2score
-	decq (player2_life)
-	jmp newPoint
-	ret
-_point_check_p2score:
-	#check if p1 scored
-	cmpq $3, (ball_x)
-	jg _ball_check_end
-	decq (player2_life)
-	jmp newPoint
-_point_check_end:
-	ret
 
 bounce_check:
 	call bounce_check_pads
@@ -575,9 +528,69 @@ bounce_check:
 
 bounce_check_pads:
 	#check pad1
-	cmpq $
+	cmpq $4, (ball_x)
+	jne _bounce_check_pad2
+	#switch(direction)
+	#case(4)↗
+	_bounce_check_pad1_case4:
+	#case(5)➙
+	_bounce_check_pad1_case5:
+	cmpq $5, (ball_direction)
+	jne _bounce_check_pad1_case6
+
+	movq (pad2_y), %rdi
+	movq (pad2_y), %rsi
+	decq %rdi
+	incq %rsi
+
+	cmpq %rdi, (ball_y)
+	jl _bounce_check_pad1_case5_nobounce
+	cmpq %rsi, (ball_y)
+	jg _bounce_check_pad1_case5_nobounce
+	_bounce_check_pad1_case5_bounce:
+		movq $2, (ball_direction)
+		ret
+	_bounce_check_pad1_case5_nobounce:
+		decq (player2_life)
+		call newPoint 
+		ret
+	_bounce_check_pad1_case6:
+	
 	#check pad2
-bounce_check_pads2:
+_bounce_check_pad2:
+	cmpq $74, (ball_x)
+	jne _bounce_check_pads_end
+	#switch(direction)
+	#case(1)↖
+	#case(2)⇽
+	_bounce_check_pad2_case2:
+	cmpq $2, (ball_direction)
+	jne _bounce_check_pad2_case3
+
+	movq (pad2_y), %rdi
+	movq (pad2_y), %rsi
+	decq %rdi
+	incq %rsi
+
+	cmpq %rdi, (ball_y)
+	jl _bounce_check_pad2_case2_nobounce
+	cmpq %rsi, (ball_y)
+	jg _bounce_check_pad2_case2_nobounce
+	_bounce_check_pad2_case2_bounce:
+		movq $5, (ball_direction)
+		ret
+	_bounce_check_pad2_case2_nobounce:
+		decq (player2_life)
+		call newPoint 
+		ret
+	_bounce_check_pad2_case3:
+	#case(3)↙
+_bounce_check_pads_end:
 	ret
+
+
 bounce_check_walls:
+	#top wall
+
+	#bottom wall
 	ret
