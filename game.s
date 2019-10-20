@@ -65,17 +65,10 @@ gameInit:
 	ret
 
 gameLoop:
-	call handleGameControls
+	call handle_game_controls
 	call handle_ball
 	call calculate_pad_pos
 	call reset_board
-
-	movq (ball_direction), %rdx
-	addq $48, %rdx
-	movq $0, %rdi
-	movq $0, %rsi
-	movb $1, %cl
-	call putChar
 
 	ret
 
@@ -349,33 +342,33 @@ _life_to_color_black:
 	movb $0, %al
 	ret
 
-handleGameControls:
+handle_game_controls:
 	call readKeyCode
 	#arrow up check
 	cmpq $72, %rax
-	jne _handleGameControls_ad
+	jne _handle_game_controls_ad
 	jmp handleArrowUp
 	#arrow down check
-_handleGameControls_ad:
+_handle_game_controls_ad:
 	cmpq $80, %rax
-	jne _handleGameControls_w
+	jne _handle_game_controls_w
 	jmp handleArrowDown
 
 	cmpq $1, (game_state)
-	jne _handleGameControls_end
+	jne _handle_game_controls_end
 	#W check
-_handleGameControls_w:
+_handle_game_controls_w:
 	cmpq $17, %rax
-	jne _handleGameControls_s
+	jne _handle_game_controls_s
 	jmp handleW
 
 	#S check
-_handleGameControls_s:
+_handle_game_controls_s:
 	cmpq $31, %rax
-	jne _handleGameControls_end
+	jne _handle_game_controls_end
 	jmp handleS
 
-_handleGameControls_end:
+_handle_game_controls_end:
 	jmp handleNoControlsUsed
 
 handleArrowUp:
@@ -584,7 +577,17 @@ bounce_check_pads:
 	cmpq %rsi, %rcx
 	jg _bounce_check_pad1_case5_nobounce
 	_bounce_check_pad1_case5_bounce:
+		cmpq $0, (pad1_speed)
+		jne _bounce_check_pad1_case5_bounce_nonstatic
 		movq $2, (ball_direction)
+		ret
+		_bounce_check_pad1_case5_bounce_nonstatic:
+		cmpq $0, (pad1_speed)
+		jg _bounce_check_pad1_case5_bounce_nonstatic2
+		movq $3, (ball_direction)
+		ret 
+		_bounce_check_pad1_case5_bounce_nonstatic2:
+		movq $1, (ball_direction)
 		ret
 	_bounce_check_pad1_case5_nobounce:
 		decq (player1_life)
@@ -669,7 +672,17 @@ _bounce_check_pad2:
 	cmpq %rsi, %rcx
 	jg _bounce_check_pad2_case2_nobounce
 	_bounce_check_pad2_case2_bounce:
+		cmpq $0, (pad2_speed)
+		jne _bounce_check_pad2_case2_bounce_nonstatic
 		movq $5, (ball_direction)
+		ret
+		_bounce_check_pad2_case2_bounce_nonstatic:
+		cmpq $0, (pad2_speed)
+		jg _bounce_check_pad2_case2_bounce_nonstatic2
+		movq $6, (ball_direction)
+		ret 
+		_bounce_check_pad2_case2_bounce_nonstatic2:
+		movq $4, (ball_direction)
 		ret
 	_bounce_check_pad2_case2_nobounce:
 		decq (player2_life)
