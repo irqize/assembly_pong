@@ -17,8 +17,30 @@
 	pad1_y: .quad 13
 	pad2_y: .quad 13
 
+	pad1_speed: .quad 0 #0-2
+	pad2_speed: ,quad 0 #0-2
+
+
+	#TODO: ball_speed
+
 	ball_x: .quad 40
 	ball_y: .quad 13
+
+	
+	#n  x  y
+	#1 +1 +2
+	#2 +2 +1
+	#3 +2  0
+	#4 +2 -1
+	#5 +1 -2
+
+	#6 -1 +2
+	#7 -2 +1
+	#8 -2  0
+	#9 -2 -2
+	#10-1 -2
+	ball_direction: .quad 3
+	#1-5 going right 6-10 going left
 
 	player1_life: .quad 11
 	player2_life: .quad 11
