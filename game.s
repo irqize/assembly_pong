@@ -53,8 +53,8 @@
 .section .game.text
 
 gameInit:
-#set timer to 4hz
-	movq $298295, %rdi
+#set timer to 2hz
+	movq $65534, %rdi
 	call setTimer
 
 	call clear_screen
@@ -65,15 +65,23 @@ gameInit:
 	ret
 
 gameLoop:
-	call handle_ball
 	call handleGameControls
+	call handle_ball
 	call calculate_pad_pos
 	call reset_board
+
+	movq (ball_direction), %rdx
+	addq $48, %rdx
+	movq $0, %rdi
+	movq $0, %rsi
+	movb $1, %cl
+	call putChar
+
 	ret
 
 newPoint:
-	movq $0, (ball_x)
-	movq $0, (ball_y)
+	movq $40, (ball_x)
+	movq $13, (ball_y)
 	movq $13, (pad1_y)
 	movq $13, (pad2_y)
 	movq $0, (pad1_speed)
@@ -516,14 +524,10 @@ _handle_ball_6:#-2 -1
 
 
 ball_check:
-	call bounce_check
-	ret
-
-
-bounce_check:
 	call bounce_check_pads
 	call bounce_check_walls
 	ret
+
 
 
 bounce_check_pads:
@@ -531,38 +535,122 @@ bounce_check_pads:
 	cmpq $4, (ball_x)
 	jne _bounce_check_pad2
 	#switch(direction)
-	#case(4)↗
+	#case(4)↙
 	_bounce_check_pad1_case4:
-	#case(5)➙
+	cmpq $4, (ball_direction)
+	jne _bounce_check_pad1_case5
+
+	movq (pad1_y), %rdi
+	movq (pad1_y), %rsi
+	decq %rdi
+	incq %rsi
+	addq (pad1_speed), %rdi
+	addq (pad1_speed), %rsi
+	
+	call align_registers
+
+	movq (ball_y), %rcx
+	incq %rcx
+
+	cmpq %rdi, %rcx
+	jl _bounce_check_pad1_case4_nobounce
+	cmpq %rsi, %rcx
+	jg _bounce_check_pad1_case4_nobounce
+	_bounce_check_pad1_case4_bounce:
+		movq $1, (ball_direction)
+		ret
+	_bounce_check_pad1_case4_nobounce:
+		decq (player1_life)
+		call newPoint 
+		ret
+	#case(5)⇽
 	_bounce_check_pad1_case5:
 	cmpq $5, (ball_direction)
 	jne _bounce_check_pad1_case6
 
-	movq (pad2_y), %rdi
-	movq (pad2_y), %rsi
+	movq (pad1_y), %rdi
+	movq (pad1_y), %rsi
 	decq %rdi
 	incq %rsi
+	addq (pad1_speed), %rdi
+	addq (pad1_speed), %rsi
+	
+	call align_registers
 
-	cmpq %rdi, (ball_y)
+	movq (ball_y), %rcx
+
+	cmpq %rdi, %rcx
 	jl _bounce_check_pad1_case5_nobounce
-	cmpq %rsi, (ball_y)
+	cmpq %rsi, %rcx
 	jg _bounce_check_pad1_case5_nobounce
 	_bounce_check_pad1_case5_bounce:
 		movq $2, (ball_direction)
 		ret
 	_bounce_check_pad1_case5_nobounce:
-		decq (player2_life)
+		decq (player1_life)
 		call newPoint 
 		ret
+	#case(6)↖
 	_bounce_check_pad1_case6:
+	cmpq $6, (ball_direction)
+	jne _bounce_check_pad2
+	movq (pad1_y), %rdi
+	movq (pad1_y), %rsi
+	decq %rdi
+	incq %rsi
+	addq (pad1_speed), %rdi
+	addq (pad1_speed), %rsi
+	
+	call align_registers
+
+	movq (ball_y), %rcx
+	decq %rcx
+
+	cmpq %rdi, %rcx
+	jl _bounce_check_pad1_case6_nobounce
+	cmpq %rsi, %rcx
+	jg _bounce_check_pad1_case6_nobounce
+	_bounce_check_pad1_case6_bounce:
+		movq $3, (ball_direction)
+		ret
+	_bounce_check_pad1_case6_nobounce:
+		decq (player1_life)
+		call newPoint 
+		ret
 	
 	#check pad2
 _bounce_check_pad2:
 	cmpq $74, (ball_x)
 	jne _bounce_check_pads_end
 	#switch(direction)
-	#case(1)↖
-	#case(2)⇽
+	#case(1)↘
+	cmpq $1, (ball_direction)
+	jne _bounce_check_pad2_case2
+
+	movq (pad2_y), %rdi
+	movq (pad2_y), %rsi
+	decq %rdi
+	incq %rsi
+	addq (pad2_speed), %rdi
+	addq (pad2_speed), %rsi
+
+	call align_registers
+
+	movq (ball_y), %rcx
+	incq %rcx
+
+	cmpq %rdi, %rcx
+	jl _bounce_check_pad2_case1_nobounce
+	cmpq %rsi, %rcx
+	jg _bounce_check_pad2_case1_nobounce
+	_bounce_check_pad2_case1_bounce:
+		movq $4, (ball_direction)
+		ret
+	_bounce_check_pad2_case1_nobounce:
+		decq (player2_life)
+		call newPoint 
+		ret
+	#case(2)➙
 	_bounce_check_pad2_case2:
 	cmpq $2, (ball_direction)
 	jne _bounce_check_pad2_case3
@@ -571,10 +659,14 @@ _bounce_check_pad2:
 	movq (pad2_y), %rsi
 	decq %rdi
 	incq %rsi
+	addq (pad2_speed), %rdi
+	addq (pad2_speed), %rsi
 
-	cmpq %rdi, (ball_y)
+	movq (ball_y), %rcx
+
+	cmpq %rdi, %rcx
 	jl _bounce_check_pad2_case2_nobounce
-	cmpq %rsi, (ball_y)
+	cmpq %rsi, %rcx
 	jg _bounce_check_pad2_case2_nobounce
 	_bounce_check_pad2_case2_bounce:
 		movq $5, (ball_direction)
@@ -584,13 +676,91 @@ _bounce_check_pad2:
 		call newPoint 
 		ret
 	_bounce_check_pad2_case3:
-	#case(3)↙
-_bounce_check_pads_end:
-	ret
+	#case(3)↗
+	cmpq $3, (ball_direction)
+	jne _bounce_check_pads_end
+
+	movq (pad2_y), %rdi
+	movq (pad2_y), %rsi
+	decq %rdi
+	incq %rsi
+	addq (pad2_speed), %rdi
+	addq (pad2_speed), %rsi
+	
+	call align_registers
+
+	movq (ball_y), %rcx
+	decq %rcx
+
+	cmpq %rdi, %rcx
+	jl _bounce_check_pad2_case3_nobounce
+	cmpq %rsi, %rcx
+	jg _bounce_check_pad2_case3_nobounce
+	_bounce_check_pad2_case3_bounce:
+		movq $6, (ball_direction)
+		ret
+	_bounce_check_pad2_case3_nobounce:
+		decq (player2_life)
+		call newPoint 
+		ret
+	_bounce_check_pads_end:
+		ret
 
 
 bounce_check_walls:
 	#top wall
-
+	cmpq $1, (ball_y)
+	jne _bounce_check_walls_bottom
+	#switch(direction)
+	#case(3)↗ -> case(1)↘
+	cmpq $3, (ball_direction)
+	jne _bounce_check_walls_top_6
+	incq (ball_y)
+	incq (ball_y)
+	movq $1, (ball_direction)
+	ret
+	#case(6)↖ -> case(4)↙
+	_bounce_check_walls_top_6:
+	cmpq $6, (ball_direction)
+	jne _bounce_check_walls_end
+	incq (ball_y)
+	incq (ball_y)
+	movq $4, (ball_direction)
+	ret
 	#bottom wall
+	_bounce_check_walls_bottom:
+	cmpq $22, (ball_y)
+	jne _bounce_check_walls_end
+	#switch(direction)
+	#case(1)↘ -> case(3)↗
+	cmpq $1, (ball_direction)
+	jne _bounce_check_walls_bottom_4
+	decq (ball_y)
+	decq (ball_y)
+	movq $3, (ball_direction)
+	ret
+	#case(4)↙ -> case(6)↖
+	_bounce_check_walls_bottom_4:
+	cmpq $4, (ball_direction)
+	jne _bounce_check_walls_end
+	decq (ball_y)
+	decq (ball_y)
+	movq $6, (ball_direction)
+	_bounce_check_walls_end:
+	ret
+
+
+align_registers: #rsi - bottom ,rdi - top
+	cmpq $2, %rdi
+	jge _align_registers_2case
+	movq $2, %rdi
+	movq $4, %rsi
+	ret
+_align_registers_2case:
+	cmpq $22, %rsi
+	jle _align_registers_end
+	movq $20, %rdi
+	movq $22, %rsi
+	ret
+_align_registers_end:
 	ret
