@@ -51,6 +51,10 @@
 	j: .quad 0
 
 .section .game.text
+exit:
+     movq $60, %rax # set syscall code to 60 (sys_exit)
+     movq $0, %rdi # set program's return code to 0 (no error)
+     syscall
 
 menu_item1:
     movq $38, %rdi
@@ -93,7 +97,7 @@ menu_item1:
     movb $'t', %dl
     movb $4, %cl
     call putChar
-    jmp handle_menu_controls
+    ret
 
 menu_item2:
     movq $38, %rdi
@@ -136,7 +140,7 @@ menu_item2:
     movb $'t', %dl
     movb $23, %cl
     call putChar
-    jmp handle_menu_controls
+    ret
 
 handle_menu_controls:
     call readKeyCode
@@ -152,7 +156,7 @@ _handle_menu_controls_up_down:
 	cmpq $80, %rax
 	jne _other_key
 _arrow:
-    cmp $0, %bh
+    cmp $0, %sil
     je _select_quit
     jmp _select_play
 
@@ -160,22 +164,25 @@ _other_key:
 	jmp handle_menu_controls
 
 _handle_enter:
-    cmp $1, %bh
-    je gameInit
+    cmp $1, %sil
+    je exit
     jmp _start
 
 _select_quit:
-    mov $1, %bh
-    jmp menu_item2
-_select_play:
-    mov $0, %bh
-    jmp menu_item1
+    mov $1, %sil
+    call menu_item2
+    jmp handle_menu_controls
 
+_select_play:
+    mov $0, %sil
+    call menu_item1
+    jmp handle_menu_controls
 
 gameInit:
     call clear_screen
-    xor %bh, %bh
-    jmp menu_item1
+    xor %sil, %sil
+    call menu_item1
+    jmp handle_menu_controls
 
 _start:
 #set timer to 2hz
