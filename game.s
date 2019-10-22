@@ -52,7 +52,127 @@
 
 .section .game.text
 
+menu_item1:
+    call clear_screen
+    movq $38, %rdi
+    movq $10, %rsi
+    movb $'P', %dl
+    movb $23, %cl
+    call putChar
+    movq $39, %rdi
+    movq $10, %rsi
+    movb $'l', %dl
+    movb $23, %cl
+    call putChar
+    movq $40, %rdi
+    movq $10, %rsi
+    movb $'a', %dl
+    movb $23, %cl
+    call putChar
+    movq $41, %rdi
+    movq $10, %rsi
+    movb $'y', %dl
+    movb $23, %cl
+    call putChar
+    movq $38, %rdi
+    movq $12, %rsi
+    movb $'Q', %dl
+    movb $4, %cl
+    call putChar
+    movq $39, %rdi
+    movq $12, %rsi
+    movb $'u', %dl
+    movb $4, %cl
+    call putChar
+    movq $40, %rdi
+    movq $12, %rsi
+    movb $'i', %dl
+    movb $4, %cl
+    call putChar
+    movq $41, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $4, %cl
+    call putChar
+    jmp handle_menu_controls
+
+menu_item2:
+    call clear_screen
+    movq $38, %rdi
+    movq $10, %rsi
+    movb $'P', %dl
+    movb $4, %cl
+    call putChar
+    movq $39, %rdi
+    movq $10, %rsi
+    movb $'l', %dl
+    movb $4, %cl
+    call putChar
+    movq $40, %rdi
+    movq $10, %rsi
+    movb $'a', %dl
+    movb $4, %cl
+    call putChar
+    movq $41, %rdi
+    movq $10, %rsi
+    movb $'y', %dl
+    movb $4, %cl
+    call putChar
+    movq $38, %rdi
+    movq $12, %rsi
+    movb $'Q', %dl
+    movb $23, %cl
+    call putChar
+    movq $39, %rdi
+    movq $12, %rsi
+    movb $'u', %dl
+    movb $23, %cl
+    call putChar
+    movq $40, %rdi
+    movq $12, %rsi
+    movb $'i', %dl
+    movb $23, %cl
+    call putChar
+    movq $41, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $23, %cl
+    call putChar
+    jmp handle_menu_controls
+
+handle_menu_controls:
+    call readKeyCode
+	#enter check
+	cmpq $28, %rax
+	jne _handle_menu_controls_up_down
+	jmp _handleEnter
+
+#	#arrow up check
+_handle_menu_controls_up_down:
+	cmpq $72, %rax
+	je _arrow
+	cmpq $80, %rax
+	jne _other_key
+_arrow:
+    xorb $1, %ah
+    cmpb $0, %ah
+    jz menu_item1
+    jmp menu_item2
+
+_other_key:
+	jmp handle_menu_controls
+
+_handleEnter:
+    cmpb $0, %ah
+    je exit
+    jmp _start
+
+
 gameInit:
+    xorb %ah, %ah
+    jmp menu_item1
+
+_start:
 #set timer to 2hz
 	movq $65534, %rdi
 	call setTimer
@@ -62,9 +182,14 @@ gameInit:
 	call draw_ball
 	call draw_pads
 	call draw_life_bars
+	movq $0, (game_state)
 	ret
 
+doNothing:
+    ret
 gameLoop:
+    cmpq $0, (game_state)
+    jne doNothing
 	call handle_game_controls
 	call handle_ball
 	call calculate_pad_pos
@@ -777,3 +902,9 @@ _align_registers_2case:
 	ret
 _align_registers_end:
 	ret
+
+exit:
+#   movq $60, %rax
+#   movq $0, %rsi
+#   syscall
+    hlt
