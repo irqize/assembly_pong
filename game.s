@@ -9,7 +9,7 @@
 	# 0 - MENU
 	# 1 - IN GAME PLAYER VS PLAYER
 	# 2 - IN GAME PLAYER VS COMPUTER
-	game_state: .quad 1
+	game_state: .quad 0
 	
 	window_height: .quad 25
 	window_width: .quad 80
@@ -53,7 +53,6 @@
 .section .game.text
 
 menu_item1:
-    call clear_screen
     movq $38, %rdi
     movq $10, %rsi
     movb $'P', %dl
@@ -97,7 +96,6 @@ menu_item1:
     jmp handle_menu_controls
 
 menu_item2:
-    call clear_screen
     movq $38, %rdi
     movq $10, %rsi
     movb $'P', %dl
@@ -116,7 +114,7 @@ menu_item2:
     movq $41, %rdi
     movq $10, %rsi
     movb $'y', %dl
-    movb $4, %cl
+
     call putChar
     movq $38, %rdi
     movq $12, %rsi
@@ -145,7 +143,7 @@ handle_menu_controls:
 	#enter check
 	cmpq $28, %rax
 	jne _handle_menu_controls_up_down
-	jmp _handleEnter
+	jmp _handle_enter
 
 #	#arrow up check
 _handle_menu_controls_up_down:
@@ -154,22 +152,29 @@ _handle_menu_controls_up_down:
 	cmpq $80, %rax
 	jne _other_key
 _arrow:
-    xorb $1, %ah
-    cmpb $0, %ah
-    jz menu_item1
-    jmp menu_item2
+    cmp $0, %bh
+    je _select_quit
+    jmp _select_play
 
 _other_key:
 	jmp handle_menu_controls
 
-_handleEnter:
-    cmpb $0, %ah
-    je exit
+_handle_enter:
+    cmp $1, %bh
+    je gameInit
     jmp _start
+
+_select_quit:
+    mov $1, %bh
+    jmp menu_item2
+_select_play:
+    mov $0, %bh
+    jmp menu_item1
 
 
 gameInit:
-    xorb %ah, %ah
+    call clear_screen
+    xor %bh, %bh
     jmp menu_item1
 
 _start:
@@ -182,14 +187,14 @@ _start:
 	call draw_ball
 	call draw_pads
 	call draw_life_bars
-	movq $0, (game_state)
+	movq $1, (game_state)
 	ret
 
 doNothing:
     ret
 gameLoop:
     cmpq $0, (game_state)
-    jne doNothing
+    je doNothing
 	call handle_game_controls
 	call handle_ball
 	call calculate_pad_pos
@@ -902,9 +907,3 @@ _align_registers_2case:
 	ret
 _align_registers_end:
 	ret
-
-exit:
-#   movq $60, %rax
-#   movq $0, %rsi
-#   syscall
-    hlt
