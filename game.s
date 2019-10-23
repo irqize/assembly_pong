@@ -5,11 +5,14 @@
 .global gameLoop
 
 .section .game.data
+
 	#Game State Codes
 	# 0 - MENU
 	# 1 - IN GAME PLAYER VS PLAYER
 	# 2 - IN GAME PLAYER VS COMPUTER
 	game_state: .quad 0
+
+	menu_option: .quad 0
 	
 	window_height: .quad 25
 	window_width: .quad 80
@@ -156,7 +159,7 @@ _handle_menu_controls_up_down:
 	cmpq $80, %rax
 	jne _other_key
 _arrow:
-    cmp $0, %sil
+    cmpq $0, (menu_option)
     je _select_quit
     jmp _select_play
 
@@ -165,24 +168,24 @@ _other_key:
 	#jmp handle_menu_controls
 
 _handle_enter:
-    cmp $1, %sil
+    cmpq $1, (menu_option)
     je exit
     jmp _start
 	ret
 
 _select_quit:
-    mov $1, %sil
+    movq $1, (menu_option)
     call menu_item2
     ret
 
 _select_play:
-    mov $0, %sil
+    movq $0, (menu_option)
     call menu_item1
     ret
 
 gameInit:
     call clear_screen
-    xor %sil, %sil
+    movq $0, (menu_option)
     call menu_item1
 	ret
 
