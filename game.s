@@ -23,6 +23,8 @@
 	pad1_speed: .quad 0 #0-4
 	pad2_speed: .quad 0 #0-4
 
+    tmp13: .quad 0
+    tmp12: .quad 0
 
 	#TODO: ball_speed
 
@@ -56,6 +58,8 @@
 .section .game.text
 
 two_won:
+    movq (tmp13), %r13
+    movq (tmp12), %r12
     movq $41, %rdi
     movq $10, %rsi
     movb $'2', %dl
@@ -64,6 +68,8 @@ two_won:
     jmp after_gameover
 
 one_won:
+    movq (tmp13), %r13
+    movq (tmp12), %r12
     movq $41, %rdi
     movq $10, %rsi
     movb $'1', %dl
@@ -103,7 +109,11 @@ loop_go_controls:
     call readKeyCode
     cmpq $28, %rax
     jne return
-    movq $1, (game_state)
+    call reset_board
+    call clear_screen
+    movq $0, (menu_option)
+    call menu_item1
+    movq $0, (game_state)
     ret
 
 return:
@@ -605,15 +615,136 @@ _game_over:
     movb $23, %cl
     call putChar
 
-    movq (player2_life), %r15
-    movq (player1_life), %r14
+
+    movq $28, %rdi
+    movq $12, %rsi
+    movb $'P', %dl
+    movb $23, %cl
+    call putChar
+    movq $29, %rdi
+    movq $12, %rsi
+    movb $'r', %dl
+    movb $23, %cl
+    call putChar
+    movq $30, %rdi
+    movq $12, %rsi
+    movb $'e', %dl
+    movb $23, %cl
+    call putChar
+    movq $31, %rdi
+    movq $12, %rsi
+    movb $'s', %dl
+    movb $23, %cl
+    call putChar
+    movq $32, %rdi
+    movq $12, %rsi
+    movb $'s', %dl
+    movb $23, %cl
+    call putChar
+    movq $33, %rdi
+    movq $12, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+    movq $34, %rdi
+    movq $12, %rsi
+    movb $'E', %dl
+    movb $23, %cl
+    call putChar
+    movq $35, %rdi
+    movq $12, %rsi
+    movb $'n', %dl
+    movb $23, %cl
+    call putChar
+    movq $36, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $23, %cl
+    call putChar
+    movq $37, %rdi
+    movq $12, %rsi
+    movb $'e', %dl
+    movb $23, %cl
+    call putChar
+    movq $38, %rdi
+    movq $12, %rsi
+    movb $'r', %dl
+    movb $23, %cl
+    call putChar
+    movq $39, %rdi
+    movq $12, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+    movq $40, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $23, %cl
+    call putChar
+    movq $41, %rdi
+    movq $12, %rsi
+    movb $'o', %dl
+    movb $23, %cl
+    call putChar
+    movq $42, %rdi
+    movq $12, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+    movq $43, %rdi
+    movq $12, %rsi
+    movb $'c', %dl
+    movb $23, %cl
+    call putChar
+    movq $44, %rdi
+    movq $12, %rsi
+    movb $'o', %dl
+    movb $23, %cl
+    call putChar
+    movq $45, %rdi
+    movq $12, %rsi
+    movb $'n', %dl
+    movb $23, %cl
+    call putChar
+    movq $46, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $23, %cl
+    call putChar
+    movq $47, %rdi
+    movq $12, %rsi
+    movb $'i', %dl
+    movb $23, %cl
+    call putChar
+    movq $48, %rdi
+    movq $12, %rsi
+    movb $'n', %dl
+    movb $23, %cl
+    call putChar
+    movq $49, %rdi
+    movq $12, %rsi
+    movb $'u', %dl
+    movb $23, %cl
+    call putChar
+    movq $50, %rdi
+    movq $12, %rsi
+    movb $'e', %dl
+    movb $23, %cl
+    call putChar
+
+    movq %r13, (tmp13)
+    movq %r12, (tmp12)
+
+    movq (player2_life), %r13
+    movq (player1_life), %r12
 
     movq $11, (player1_life)
     movq $11, (player2_life)
 
-    cmpq %r14, %r15
+    cmpq %r12, %r13
     jle one_won
     jmp two_won
+    ret
 
 _life_to_color_black:
 	movb $0, %al
