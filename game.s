@@ -161,7 +161,8 @@ _arrow:
     jmp _select_play
 
 _other_key:
-	jmp handle_menu_controls
+	ret
+	#jmp handle_menu_controls
 
 _handle_enter:
     cmp $1, %sil
@@ -185,7 +186,7 @@ gameInit:
     jmp handle_menu_controls
 
 _start:
-#set timer to 2hz
+	#set timer to 18hz (smallest value possible)
 	movq $65534, %rdi
 	call setTimer
 
@@ -198,7 +199,8 @@ _start:
 	ret
 
 doNothing:
-    ret
+    call handle_menu_controls
+	ret
 gameLoop:
     cmpq $0, (game_state)
     je doNothing
