@@ -168,22 +168,23 @@ _handle_enter:
     cmp $1, %sil
     je exit
     jmp _start
+	ret
 
 _select_quit:
     mov $1, %sil
     call menu_item2
-    jmp handle_menu_controls
+    ret
 
 _select_play:
     mov $0, %sil
     call menu_item1
-    jmp handle_menu_controls
+    ret
 
 gameInit:
     call clear_screen
     xor %sil, %sil
     call menu_item1
-    jmp handle_menu_controls
+	ret
 
 _start:
 	#set timer to 18hz (smallest value possible)
