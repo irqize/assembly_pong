@@ -9,7 +9,7 @@
 	#Game State Codes
 	# 0 - MENU
 	# 1 - IN GAME PLAYER VS PLAYER
-	# 2 - IN GAME PLAYER VS COMPUTER
+	# 2 - GAME OVER
 	game_state: .quad 0
 
 	menu_option: .quad 0
@@ -44,8 +44,8 @@
 	#1-3 going right 4-6 going left
 	last_ball_direction: .quad 2
 
-	player1_life: .quad 11
-	player2_life: .quad 11
+	player1_life: .quad 1
+	player2_life: .quad 1
 
 	x: .quad 0
 	y: .quad 0
@@ -54,10 +54,90 @@
 	j: .quad 0
 
 .section .game.text
+
+two_won:
+    movq $41, %rdi
+    movq $10, %rsi
+    movb $'2', %dl
+    movb $23, %cl
+    call putChar
+    jmp after_gameover
+
+one_won:
+    movq $41, %rdi
+    movq $10, %rsi
+    movb $'1', %dl
+    movb $23, %cl
+    call putChar
+    jmp after_gameover
+
+after_gameover:
+    movq $42, %rdi
+    movq $10, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+    movq $43, %rdi
+    movq $10, %rsi
+    movb $'w', %dl
+    movb $23, %cl
+    call putChar
+    movq $44, %rdi
+    movq $10, %rsi
+    movb $'o', %dl
+    movb $23, %cl
+    call putChar
+    movq $45, %rdi
+    movq $10, %rsi
+    movb $'n', %dl
+    movb $23, %cl
+    call putChar
+    movq $46, %rdi
+    movq $10, %rsi
+    movb $'!', %dl
+    movb $23, %cl
+    call putChar
+    ret
+
+loop_go_controls:
+    call readKeyCode
+    cmpq $28, %rax
+    jne return
+    movq $1, (game_state)
+    ret
+
+return:
+    ret
+
 exit:
-     movq $60, %rax # set syscall code to 60 (sys_exit)
-     movq $0, %rdi # set program's return code to 0 (no error)
-     syscall
+    hlt
+  #  mov     $5301, %ax
+  #  xor     %bx, %bx
+  #  int     $15
+  #
+  #  #;Try to set APM version (to 1.2)
+  #  mov     $21262, %ax
+  #  xor     %BX, %bx
+  #  mov     $0102, %cx
+  #  int     $15
+  #
+  #  #;Turn off the system
+  #  mov     $5307, %ax
+  #  mov     $0001, %bx
+  #  mov     $0003, %cx
+  #  int     $15
+   # mov     $0xa9,       %al  # 2 bytes: b0 a9
+   # mov     $0xfee1dead, %edi # 5 bytes: bf ad de e1 fe
+   # mov     $0x28121969, %esi # 5 bytes: be 69 19 12 28
+   # mov     $0x4321fedc, %edx # 5 bytes: ba dc fe 21 43
+   # syscall   
+    #mov		$0, %r15
+
+ #    jmp halt
+ ####
+ #    movq $-1, %rax # set syscall code to 60? (sys_exit?)
+ #    movq $0, %rdi # set program's return code to 0 (no error)
+ #    syscall
 
 menu_item1:
     movq $38, %rdi
@@ -82,17 +162,17 @@ menu_item1:
     call putChar
     movq $38, %rdi
     movq $12, %rsi
-    movb $'Q', %dl
+    movb $'H', %dl  # TODO change to Q when poweroff implemented
     movb $4, %cl
     call putChar
     movq $39, %rdi
     movq $12, %rsi
-    movb $'u', %dl
+    movb $'a', %dl   # TODO change to u when poweroff implemented
     movb $4, %cl
     call putChar
     movq $40, %rdi
     movq $12, %rsi
-    movb $'i', %dl
+    movb $'l', %dl   # TODO change to i when poweroff implemented
     movb $4, %cl
     call putChar
     movq $41, %rdi
@@ -125,17 +205,17 @@ menu_item2:
     call putChar
     movq $38, %rdi
     movq $12, %rsi
-    movb $'Q', %dl
+    movb $'H', %dl  # TODO change to Q when poweroff implemented
     movb $23, %cl
     call putChar
     movq $39, %rdi
     movq $12, %rsi
-    movb $'u', %dl
+    movb $'a', %dl   # TODO change to u when poweroff implemented
     movb $23, %cl
     call putChar
     movq $40, %rdi
     movq $12, %rsi
-    movb $'i', %dl
+    movb $'l', %dl   # TODO change to i when poweroff implemented
     movb $23, %cl
     call putChar
     movq $41, %rdi
@@ -147,12 +227,10 @@ menu_item2:
 
 handle_menu_controls:
     call readKeyCode
-	#enter check
 	cmpq $28, %rax
 	jne _handle_menu_controls_up_down
 	jmp _handle_enter
 
-#	#arrow up check
 _handle_menu_controls_up_down:
 	cmpq $72, %rax
 	je _arrow
@@ -202,11 +280,17 @@ _start:
 	movq $1, (game_state)
 	ret
 
-doNothing:
+doMenu:
     call handle_menu_controls
-	ret
+    ret
+doNothing:
+    call loop_go_controls
+    ret
+
 gameLoop:
     cmpq $0, (game_state)
+    je doMenu
+    cmpq $2, (game_state)
     je doNothing
 	call handle_game_controls
 	call handle_ball
@@ -441,11 +525,12 @@ _draw_life_bars_right:
 
 # int(int life, int pos)
 life_to_color:
-	cmpq %rdi, %rsi
-	jg _life_to_color_black
 
 	cmpq $0, %rdi
-	je _life_to_color_black
+	je _game_over
+
+    cmpq %rdi, %rsi
+	jg _life_to_color_black
 
 	cmpq $2, %rsi
 	jle _life_to_color_red
@@ -480,6 +565,55 @@ _life_to_color_lgreen:
 _life_to_color_green:
 	movb $34, %al
 	ret
+
+_game_over:
+    movq $2, (game_state)
+    call clear_screen
+    movq $34, %rdi
+    movq $10, %rsi
+    movb $'P', %dl
+    movb $23, %cl
+    call putChar
+    movq $35, %rdi
+    movq $10, %rsi
+    movb $'l', %dl
+    movb $23, %cl
+    call putChar
+    movq $36, %rdi
+    movq $10, %rsi
+    movb $'a', %dl
+    movb $23, %cl
+    call putChar
+    movq $37, %rdi
+    movq $10, %rsi
+    movb $'y', %dl
+    movb $23, %cl
+    call putChar
+    movq $38, %rdi
+    movq $10, %rsi
+    movb $'e', %dl
+    movb $23, %cl
+    call putChar
+    movq $39, %rdi
+    movq $10, %rsi
+    movb $'r', %dl
+    movb $23, %cl
+    call putChar
+    movq $40, %rdi
+    movq $10, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+
+    movq (player2_life), %r15
+    movq (player1_life), %r14
+
+    movq $11, (player1_life)
+    movq $11, (player2_life)
+
+    cmpq %r14, %r15
+    jle one_won
+    jmp two_won
 
 _life_to_color_black:
 	movb $0, %al
