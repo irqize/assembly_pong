@@ -5,11 +5,14 @@
 .global gameLoop
 
 .section .game.data
+
 	#Game State Codes
 	# 0 - MENU
 	# 1 - IN GAME PLAYER VS PLAYER
 	# 2 - IN GAME PLAYER VS COMPUTER
-	game_state: .quad 1
+	game_state: .quad 0
+
+	menu_option: .quad 0
 	
 	window_height: .quad 25
 	window_width: .quad 80
@@ -51,9 +54,143 @@
 	j: .quad 0
 
 .section .game.text
+exit:
+     movq $60, %rax # set syscall code to 60 (sys_exit)
+     movq $0, %rdi # set program's return code to 0 (no error)
+     syscall
+
+menu_item1:
+    movq $38, %rdi
+    movq $10, %rsi
+    movb $'P', %dl
+    movb $23, %cl
+    call putChar
+    movq $39, %rdi
+    movq $10, %rsi
+    movb $'l', %dl
+    movb $23, %cl
+    call putChar
+    movq $40, %rdi
+    movq $10, %rsi
+    movb $'a', %dl
+    movb $23, %cl
+    call putChar
+    movq $41, %rdi
+    movq $10, %rsi
+    movb $'y', %dl
+    movb $23, %cl
+    call putChar
+    movq $38, %rdi
+    movq $12, %rsi
+    movb $'Q', %dl
+    movb $4, %cl
+    call putChar
+    movq $39, %rdi
+    movq $12, %rsi
+    movb $'u', %dl
+    movb $4, %cl
+    call putChar
+    movq $40, %rdi
+    movq $12, %rsi
+    movb $'i', %dl
+    movb $4, %cl
+    call putChar
+    movq $41, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $4, %cl
+    call putChar
+    ret
+
+menu_item2:
+    movq $38, %rdi
+    movq $10, %rsi
+    movb $'P', %dl
+    movb $4, %cl
+    call putChar
+    movq $39, %rdi
+    movq $10, %rsi
+    movb $'l', %dl
+    movb $4, %cl
+    call putChar
+    movq $40, %rdi
+    movq $10, %rsi
+    movb $'a', %dl
+    movb $4, %cl
+    call putChar
+    movq $41, %rdi
+    movq $10, %rsi
+    movb $'y', %dl
+
+    call putChar
+    movq $38, %rdi
+    movq $12, %rsi
+    movb $'Q', %dl
+    movb $23, %cl
+    call putChar
+    movq $39, %rdi
+    movq $12, %rsi
+    movb $'u', %dl
+    movb $23, %cl
+    call putChar
+    movq $40, %rdi
+    movq $12, %rsi
+    movb $'i', %dl
+    movb $23, %cl
+    call putChar
+    movq $41, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $23, %cl
+    call putChar
+    ret
+
+handle_menu_controls:
+    call readKeyCode
+	#enter check
+	cmpq $28, %rax
+	jne _handle_menu_controls_up_down
+	jmp _handle_enter
+
+#	#arrow up check
+_handle_menu_controls_up_down:
+	cmpq $72, %rax
+	je _arrow
+	cmpq $80, %rax
+	jne _other_key
+_arrow:
+    cmpq $0, (menu_option)
+    je _select_quit
+    jmp _select_play
+
+_other_key:
+	ret
+	#jmp handle_menu_controls
+
+_handle_enter:
+    cmpq $1, (menu_option)
+    je exit
+    jmp _start
+	ret
+
+_select_quit:
+    movq $1, (menu_option)
+    call menu_item2
+    ret
+
+_select_play:
+    movq $0, (menu_option)
+    call menu_item1
+    ret
 
 gameInit:
-#set timer to 2hz
+    call clear_screen
+    movq $0, (menu_option)
+    call menu_item1
+	ret
+
+_start:
+	#set timer to 18hz (smallest value possible)
 	movq $65534, %rdi
 	call setTimer
 
@@ -62,9 +199,15 @@ gameInit:
 	call draw_ball
 	call draw_pads
 	call draw_life_bars
+	movq $1, (game_state)
 	ret
 
+doNothing:
+    call handle_menu_controls
+	ret
 gameLoop:
+    cmpq $0, (game_state)
+    je doNothing
 	call handle_game_controls
 	call handle_ball
 	call calculate_pad_pos
