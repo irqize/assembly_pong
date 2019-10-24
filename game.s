@@ -1,4 +1,7 @@
-#every 17th color from zero is fully drawn (no character seen)
+#####   Authors' netIDs: pkowalewski, gkulikovskis   #####
+
+#   every 17th color from zero is fully drawn (no character seen)
+
 .file "src/game/game.s"
 
 .global gameInit
@@ -6,25 +9,24 @@
 
 .section .game.data
 
-	#Game State Codes
+	#   Game State Codes
 	# 0 - MENU
 	# 1 - IN GAME PLAYER VS PLAYER
 	# 2 - GAME OVER
-	game_state: .quad 0
 
-	menu_option: .quad 0
-	
+	game_state: .quad 0
+	menu_option: .quad 0    #   Which menu option is selected
+	gameover_display_counter: .quad 0   #   For keeping track how many times winner screen is shown
+
 	window_height: .quad 25
 	window_width: .quad 80
 
-	pad1_y: .quad 13
+	pad1_y: .quad 13    #   Pad locations
 	pad2_y: .quad 13
 
 	pad1_speed: .quad 0 #0-4
 	pad2_speed: .quad 0 #0-4
 
-    tmp13: .quad 0
-    tmp12: .quad 0
 
 	#TODO: ball_speed
 
@@ -43,7 +45,7 @@
 	#6 -2 -1
 
 	ball_direction: .quad 2
-	#1-3 going right 4-6 going left
+	# 1-3 going right, 4-6 going left
 	last_ball_direction: .quad 2
 
 	player1_life: .quad 1
@@ -57,9 +59,10 @@
 
 .section .game.text
 
-game_over:
-    movq $3, (game_state)
-   # call newPoint
+game_over:  #   Logic for end of the game
+    movq $2, (game_state)	#
+    incq (gameover_display_counter) # Display winner screen 5 times
+    call clear_screen  # Writes: Player X won! \n Press Enter to continue
     movq $34, %rdi
     movq $10, %rsi
     movb $'P', %dl
@@ -95,7 +98,6 @@ game_over:
     movb $' ', %dl
     movb $23, %cl
     call putChar
-
 
     movq $28, %rdi
     movq $12, %rsi
@@ -213,17 +215,10 @@ game_over:
     movb $23, %cl
     call putChar
 
-    movq %r13, (tmp13)
-    movq %r12, (tmp12)
-
     movq (player2_life), %r13
     movq (player1_life), %r12
 
-    movq $1, (player1_life)
-    movq $1, (player2_life)
-
-   # call loop_go_controls
-    movq $2, (game_state)
+  #  movq $3, (game_state)
 
     cmpq %r12, %r13
     jle one_won
@@ -232,8 +227,6 @@ game_over:
 
 
 two_won:
-    movq (tmp13), %r13
-    movq (tmp12), %r12
     movq $41, %rdi
     movq $10, %rsi
     movb $'2', %dl
@@ -242,8 +235,6 @@ two_won:
     jmp after_gameover
 
 one_won:
-    movq (tmp13), %r13
-    movq (tmp12), %r12
     movq $41, %rdi
     movq $10, %rsi
     movb $'1', %dl
@@ -252,6 +243,9 @@ one_won:
     jmp after_gameover
 
 after_gameover:
+	movq $1, (player1_life)
+	movq $1, (player2_life)
+
     movq $42, %rdi
     movq $10, %rsi
     movb $' ', %dl
@@ -277,18 +271,23 @@ after_gameover:
     movb $'!', %dl
     movb $23, %cl
     call putChar
-    jmp loop_go_controls
+    ret
 
-loop_go_controls:
+loop_gameover_controls:
     call readKeyCode
+	# movq $2, (game_state)
     cmpq $28, %rax
     je back_to_menu
-    #call reset_board
-   # call clear_screen
-   ret
+    ret
+
 back_to_menu:
+	movq $0, (gameover_display_counter)
+ #   movq $1, (player1_life)
+  #  movq $1, (player2_life)
+    # call reset_board
+    call clear_screen
     movq $0, (menu_option)
-    call menu_item1
+    call menu_optionPlay
     movq $0, (game_state)
     ret
 
@@ -297,35 +296,8 @@ return:
 
 exit:
     hlt
-  #  mov     $5301, %ax
-  #  xor     %bx, %bx
-  #  int     $15
-  #
-  #  #;Try to set APM version (to 1.2)
-  #  mov     $21262, %ax
-  #  xor     %BX, %bx
-  #  mov     $0102, %cx
-  #  int     $15
-  #
-  #  #;Turn off the system
-  #  mov     $5307, %ax
-  #  mov     $0001, %bx
-  #  mov     $0003, %cx
-  #  int     $15
-   # mov     $0xa9,       %al  # 2 bytes: b0 a9
-   # mov     $0xfee1dead, %edi # 5 bytes: bf ad de e1 fe
-   # mov     $0x28121969, %esi # 5 bytes: be 69 19 12 28
-   # mov     $0x4321fedc, %edx # 5 bytes: ba dc fe 21 43
-   # syscall   
-    #mov		$0, %r15
 
- #    jmp halt
- ####
- #    movq $-1, %rax # set syscall code to 60? (sys_exit?)
- #    movq $0, %rdi # set program's return code to 0 (no error)
- #    syscall
-
-menu_item1:
+menu_optionPlay:
     movq $38, %rdi
     movq $10, %rsi
     movb $'P', %dl
@@ -368,7 +340,7 @@ menu_item1:
     call putChar
     ret
 
-menu_item2:
+menu_optionQuit:
     movq $38, %rdi
     movq $10, %rsi
     movb $'P', %dl
@@ -434,27 +406,26 @@ _other_key:
 _handle_enter:
     cmpq $1, (menu_option)
     je exit
-    jmp _start
+    jmp _resume_gameInit
 	ret
 
 _select_quit:
     movq $1, (menu_option)
-    call menu_item2
+    call menu_optionQuit
     ret
 
 _select_play:
     movq $0, (menu_option)
-    call menu_item1
+    call menu_optionPlay
     ret
 
 gameInit:
     call clear_screen
     movq $0, (menu_option)
-    call menu_item1
+    call menu_optionPlay
 	ret
-
-_start:
-	#set timer to 18hz (smallest value possible)
+_resume_gameInit:
+	#   Set timer to 18hz (smallest value possible)
 	movq $65534, %rdi
 	call setTimer
 
@@ -467,17 +438,20 @@ _start:
 	ret
 
 doMenu:
+    movq $0, (gameover_display_counter)
     jmp handle_menu_controls
     ret
-doNothing:
-    jmp loop_go_controls
+doGameOverScreen:
+    cmpq $5, (gameover_display_counter)
+    jle game_over
+    jmp loop_gameover_controls
     ret
 
 gameLoop:
     cmpq $0, (game_state)
     je doMenu
     cmpq $2, (game_state)
-    je doNothing
+    je doGameOverScreen
     cmpq $3, (game_state)
     je return
 	call handle_game_controls
