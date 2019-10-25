@@ -285,6 +285,7 @@ back_to_menu:
     movq $0, (menu_option)
     call menu_optionPlay
     movq $0, (game_state)
+    movq $2, (ball_direction)
     ret
 
 return:
