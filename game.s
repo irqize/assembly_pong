@@ -48,8 +48,8 @@
 	# 1-3 going right, 4-6 going left
 	last_ball_direction: .quad 2
 
-	player1_life: .quad 1
-	player2_life: .quad 1
+	player1_life: .quad 11
+	player2_life: .quad 11
 
 	x: .quad 0
 	y: .quad 0
@@ -242,8 +242,8 @@ one_won:
     jmp after_gameover
 
 after_gameover:
-	movq $1, (player1_life)
-	movq $1, (player2_life)
+    movq $11, (player1_life)
+    movq $11, (player2_life)
 
     movq $42, %rdi
     movq $10, %rsi
@@ -280,10 +280,7 @@ loop_gameover_controls:
     ret
 
 back_to_menu:
-	movq $0, (gameover_display_counter)
- #   movq $1, (player1_life)
-  #  movq $1, (player2_life)
-    # call reset_board
+    movq $0, (gameover_display_counter)
     call clear_screen
     movq $0, (menu_option)
     call menu_optionPlay
