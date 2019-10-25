@@ -215,8 +215,7 @@ game_over:  #   Logic for end of the game
     movb $23, %cl
     call putChar
 
-    movq (player2_life), %r13
-    movq (player1_life), %r12
+   
 
   #  movq $3, (game_state)
 
@@ -689,8 +688,8 @@ _draw_life_bars_right:
 life_to_color:
 
 	cmpq $0, %rdi
-	je game_over
-
+	je _goto_gameover
+	
     cmpq %rdi, %rsi
 	jg _life_to_color_black
 
@@ -707,6 +706,12 @@ life_to_color:
 	jle _life_to_color_lgreen
 
 	jmp _life_to_color_green
+
+_goto_gameover:
+	 movq (player2_life), %r13
+     movq (player1_life), %r12
+	 jmp game_over
+
 
 _life_to_color_red:
 	movb $68, %al
