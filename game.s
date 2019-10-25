@@ -57,7 +57,23 @@
 	i: .quad 0
 	j: .quad 0
 
+	score_1: .byte '0'
+	score_2: .byte '0'
+
 .section .game.text
+print_score:
+	movq $12, %rdi
+    movq $0, %rsi
+    movb (score_1), %dl
+    movb $23, %cl
+    call putChar
+
+	movq $68, %rdi
+    movq $0, %rsi
+    movb (score_2), %dl
+    movb $23, %cl
+    call putChar
+	ret
 
 game_over:  #   Logic for end of the game
     movq $2, (game_state)	#
@@ -215,10 +231,6 @@ game_over:  #   Logic for end of the game
     movb $23, %cl
     call putChar
 
-   
-
-  #  movq $3, (game_state)
-
     cmpq %r12, %r13
     jle one_won
     jmp two_won
@@ -286,7 +298,17 @@ back_to_menu:
     call menu_optionPlay
     movq $0, (game_state)
     movq $2, (ball_direction)
+	cmpq %r12, %r13
+    jle inc_1_score
+    jmp inc_2_score
     ret
+
+inc_1_score:
+	incq (score_1)
+	ret
+inc_2_score:
+	incq (score_2)
+	ret
 
 return:
     ret
@@ -451,6 +473,7 @@ gameLoop:
     je doGameOverScreen
     cmpq $3, (game_state)
     je return
+	call print_score
 	call handle_game_controls
 	call handle_ball
 	call calculate_pad_pos
@@ -797,7 +820,7 @@ handleS:
 _handleS:
 	ret
 
-#void()
+# void()
 handleNoControlsUsed:
 	cmpq $0, (pad1_speed)
 	je _handleNoControlsUsed_pad2
@@ -819,7 +842,7 @@ _handleNoControlsUsed_pad2_a:
 _handleNoControlsUsed_end:
 	ret
 
-#void()
+# void()
 calculate_pad_pos:
 	movq (pad1_speed), %rax
 	movq (pad1_y), %rdi
@@ -854,7 +877,7 @@ calculate_pad_pos_2up:
 calculate_pad_pos_end:
 	ret
 
-#void()
+# void()
 handle_ball:
 	cmpq $1, (ball_direction)
 	je _handle_ball_1
@@ -873,35 +896,35 @@ handle_ball:
 	ret
 
 
-_handle_ball_1: #+2 +1
+_handle_ball_1: # +2 +1
 	incq (ball_x)
 	incq (ball_x)
 	incq (ball_y)
 	jmp ball_check
 
-_handle_ball_2: #+2 0
+_handle_ball_2: # +2 0
 	incq (ball_x)
 	incq (ball_x)
 	jmp ball_check
 
-_handle_ball_3:#+2 -1
+_handle_ball_3: # +2 -1
 	incq (ball_x)
 	incq (ball_x)
 	decq (ball_y)
 	jmp ball_check
 
-_handle_ball_4: #-2 +1
+_handle_ball_4: # -2 +1
 	decq (ball_x)
 	decq (ball_x)
 	incq (ball_y)
 	jmp ball_check
 
-_handle_ball_5: #-2 0
+_handle_ball_5: # -2 0
 	decq (ball_x)
 	decq (ball_x)
 	jmp ball_check
 
-_handle_ball_6:#-2 -1
+_handle_ball_6: # -2 -1
 	decq (ball_x)
 	decq (ball_x)
 	decq (ball_y)
@@ -1156,7 +1179,7 @@ bounce_check_walls:
 	ret
 
 
-align_registers: #rsi - bottom ,rdi - top
+align_registers: # rsi - bottom ,rdi - top
 	cmpq $2, %rdi
 	jge _align_registers_2case
 	movq $2, %rdi
