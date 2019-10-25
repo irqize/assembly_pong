@@ -172,33 +172,30 @@ one_won:
 after_gameover:
     movq $11, (player1_life)
     movq $11, (player2_life)
+	movq $42, (x)
+	movq $10, (y)
 
-    movq $42, %rdi
-    movq $10, %rsi
-    movb $' ', %dl
+	movq $0, %r9
+	movq $go_2, %r10
+	
+	call _loop_won
+
+_loop_won:
+	movq (x), %rdi
+    movq (y), %rsi
+
+	movb (%r10), %dl
+
     movb $23, %cl
     call putChar
-    movq $43, %rdi
-    movq $10, %rsi
-    movb $'w', %dl
-    movb $23, %cl
-    call putChar
-    movq $44, %rdi
-    movq $10, %rsi
-    movb $'o', %dl
-    movb $23, %cl
-    call putChar
-    movq $45, %rdi
-    movq $10, %rsi
-    movb $'n', %dl
-    movb $23, %cl
-    call putChar
-    movq $46, %rdi
-    movq $10, %rsi
-    movb $'!', %dl
-    movb $23, %cl
-    call putChar
-    ret
+
+	incq %r10
+	incq %r9
+	incq (x)
+
+	cmpq (go_2_len), %r9
+	jl _loop_won
+	ret
 
 loop_gameover_controls:
     call readKeyCode
