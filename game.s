@@ -48,8 +48,8 @@
 	# 1-3 going right, 4-6 going left
 	last_ball_direction: .quad 2
 
-	player1_life: .quad 1
-	player2_life: .quad 1
+	player1_life: .quad 11
+	player2_life: .quad 11
 
 	x: .quad 0
 	y: .quad 0
@@ -351,7 +351,7 @@ _select_play:
     call menu_optionPlay
     ret
 
-gameInit:
+gameInit: 
     call clear_screen
     movq $0, (menu_option)
     call menu_optionPlay
@@ -853,11 +853,11 @@ ball_check:
 
 
 bounce_check_pads:
-	#check pad1
+	# check pad1
 	cmpq $4, (ball_x)
 	jne _bounce_check_pad2
-	#switch(direction)
-	#case(4)↙
+	# switch(direction)
+	# case(4)↙
 	_bounce_check_pad1_case4:
 	cmpq $4, (ball_direction)
 	jne _bounce_check_pad1_case5
@@ -885,7 +885,7 @@ bounce_check_pads:
 		decq (player1_life)
 		call newPoint 
 		ret
-	#case(5)⇽
+	# case(5)⇽
 	_bounce_check_pad1_case5:
 	cmpq $5, (ball_direction)
 	jne _bounce_check_pad1_case6
@@ -922,7 +922,7 @@ bounce_check_pads:
 		decq (player1_life)
 		call newPoint 
 		ret
-	#case(6)↖
+	# case(6)↖
 	_bounce_check_pad1_case6:
 	cmpq $6, (ball_direction)
 	jne _bounce_check_pad2
@@ -950,7 +950,7 @@ bounce_check_pads:
 		call newPoint 
 		ret
 	
-	#check pad2
+	# check pad2
 _bounce_check_pad2:
 	cmpq $74, (ball_x)
 	jne _bounce_check_pads_end
@@ -1092,7 +1092,7 @@ bounce_check_walls:
 	ret
 
 
-align_registers: # rsi - bottom ,rdi - top
+align_registers: # rsi - bottom, rdi - top
 	cmpq $2, %rdi
 	jge _align_registers_2case
 	movq $2, %rdi
@@ -1100,9 +1100,8 @@ align_registers: # rsi - bottom ,rdi - top
 	ret
 _align_registers_2case:
 	cmpq $22, %rsi
-	jle _align_registers_end
+	jle return
 	movq $20, %rdi
 	movq $22, %rsi
 	ret
-_align_registers_end:
-	ret
+	
