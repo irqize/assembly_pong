@@ -1,4 +1,7 @@
-#every 17th color from zero is fully drawn (no character seen)
+#####   Authors' netIDs: pkowalewski, gkulikovskis   #####
+
+#   every 17th color from zero is fully drawn (no character seen)
+
 .file "src/game/game.s"
 
 .global gameInit
@@ -6,18 +9,19 @@
 
 .section .game.data
 
-	#Game State Codes
+	#   Game State Codes
 	# 0 - MENU
 	# 1 - IN GAME PLAYER VS PLAYER
-	# 2 - IN GAME PLAYER VS COMPUTER
-	game_state: .quad 0
+	# 2 - GAME OVER
 
-	menu_option: .quad 0
-	
+	game_state: .quad 0
+	menu_option: .quad 0    #   Which menu option is selected
+	gameover_display_counter: .quad 0   #   For keeping track how many times winner screen is shown
+
 	window_height: .quad 25
 	window_width: .quad 80
 
-	pad1_y: .quad 13
+	pad1_y: .quad 13    #   Pad locations
 	pad2_y: .quad 13
 
 	pad1_speed: .quad 0 #0-4
@@ -41,11 +45,11 @@
 	#6 -2 -1
 
 	ball_direction: .quad 2
-	#1-3 going right 4-6 going left
+	# 1-3 going right, 4-6 going left
 	last_ball_direction: .quad 2
 
-	player1_life: .quad 11
-	player2_life: .quad 11
+	player1_life: .quad 1
+	player2_life: .quad 1
 
 	x: .quad 0
 	y: .quad 0
@@ -54,12 +58,245 @@
 	j: .quad 0
 
 .section .game.text
-exit:
-     movq $60, %rax # set syscall code to 60 (sys_exit)
-     movq $0, %rdi # set program's return code to 0 (no error)
-     syscall
 
-menu_item1:
+game_over:  #   Logic for end of the game
+    movq $2, (game_state)	#
+    incq (gameover_display_counter) # Display winner screen 5 times
+    call clear_screen  # Writes: Player X won! \n Press Enter to continue
+    movq $34, %rdi
+    movq $10, %rsi
+    movb $'P', %dl
+    movb $23, %cl
+    call putChar
+    movq $35, %rdi
+    movq $10, %rsi
+    movb $'l', %dl
+    movb $23, %cl
+    call putChar
+    movq $36, %rdi
+    movq $10, %rsi
+    movb $'a', %dl
+    movb $23, %cl
+    call putChar
+    movq $37, %rdi
+    movq $10, %rsi
+    movb $'y', %dl
+    movb $23, %cl
+    call putChar
+    movq $38, %rdi
+    movq $10, %rsi
+    movb $'e', %dl
+    movb $23, %cl
+    call putChar
+    movq $39, %rdi
+    movq $10, %rsi
+    movb $'r', %dl
+    movb $23, %cl
+    call putChar
+    movq $40, %rdi
+    movq $10, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+
+    movq $28, %rdi
+    movq $12, %rsi
+    movb $'P', %dl
+    movb $23, %cl
+    call putChar
+    movq $29, %rdi
+    movq $12, %rsi
+    movb $'r', %dl
+    movb $23, %cl
+    call putChar
+    movq $30, %rdi
+    movq $12, %rsi
+    movb $'e', %dl
+    movb $23, %cl
+    call putChar
+    movq $31, %rdi
+    movq $12, %rsi
+    movb $'s', %dl
+    movb $23, %cl
+    call putChar
+    movq $32, %rdi
+    movq $12, %rsi
+    movb $'s', %dl
+    movb $23, %cl
+    call putChar
+    movq $33, %rdi
+    movq $12, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+    movq $34, %rdi
+    movq $12, %rsi
+    movb $'E', %dl
+    movb $23, %cl
+    call putChar
+    movq $35, %rdi
+    movq $12, %rsi
+    movb $'n', %dl
+    movb $23, %cl
+    call putChar
+    movq $36, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $23, %cl
+    call putChar
+    movq $37, %rdi
+    movq $12, %rsi
+    movb $'e', %dl
+    movb $23, %cl
+    call putChar
+    movq $38, %rdi
+    movq $12, %rsi
+    movb $'r', %dl
+    movb $23, %cl
+    call putChar
+    movq $39, %rdi
+    movq $12, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+    movq $40, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $23, %cl
+    call putChar
+    movq $41, %rdi
+    movq $12, %rsi
+    movb $'o', %dl
+    movb $23, %cl
+    call putChar
+    movq $42, %rdi
+    movq $12, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+    movq $43, %rdi
+    movq $12, %rsi
+    movb $'c', %dl
+    movb $23, %cl
+    call putChar
+    movq $44, %rdi
+    movq $12, %rsi
+    movb $'o', %dl
+    movb $23, %cl
+    call putChar
+    movq $45, %rdi
+    movq $12, %rsi
+    movb $'n', %dl
+    movb $23, %cl
+    call putChar
+    movq $46, %rdi
+    movq $12, %rsi
+    movb $'t', %dl
+    movb $23, %cl
+    call putChar
+    movq $47, %rdi
+    movq $12, %rsi
+    movb $'i', %dl
+    movb $23, %cl
+    call putChar
+    movq $48, %rdi
+    movq $12, %rsi
+    movb $'n', %dl
+    movb $23, %cl
+    call putChar
+    movq $49, %rdi
+    movq $12, %rsi
+    movb $'u', %dl
+    movb $23, %cl
+    call putChar
+    movq $50, %rdi
+    movq $12, %rsi
+    movb $'e', %dl
+    movb $23, %cl
+    call putChar
+
+   
+
+  #  movq $3, (game_state)
+
+    cmpq %r12, %r13
+    jle one_won
+    jmp two_won
+    ret
+
+
+two_won:
+    movq $41, %rdi
+    movq $10, %rsi
+    movb $'2', %dl
+    movb $23, %cl
+    call putChar
+    jmp after_gameover
+
+one_won:
+    movq $41, %rdi
+    movq $10, %rsi
+    movb $'1', %dl
+    movb $23, %cl
+    call putChar
+    jmp after_gameover
+
+after_gameover:
+	movq $1, (player1_life)
+	movq $1, (player2_life)
+
+    movq $42, %rdi
+    movq $10, %rsi
+    movb $' ', %dl
+    movb $23, %cl
+    call putChar
+    movq $43, %rdi
+    movq $10, %rsi
+    movb $'w', %dl
+    movb $23, %cl
+    call putChar
+    movq $44, %rdi
+    movq $10, %rsi
+    movb $'o', %dl
+    movb $23, %cl
+    call putChar
+    movq $45, %rdi
+    movq $10, %rsi
+    movb $'n', %dl
+    movb $23, %cl
+    call putChar
+    movq $46, %rdi
+    movq $10, %rsi
+    movb $'!', %dl
+    movb $23, %cl
+    call putChar
+    ret
+
+loop_gameover_controls:
+    call readKeyCode
+	# movq $2, (game_state)
+    cmpq $28, %rax
+    je back_to_menu
+    ret
+
+back_to_menu:
+	movq $0, (gameover_display_counter)
+ #   movq $1, (player1_life)
+  #  movq $1, (player2_life)
+    # call reset_board
+    call clear_screen
+    movq $0, (menu_option)
+    call menu_optionPlay
+    movq $0, (game_state)
+    ret
+
+return:
+    ret
+
+exit:
+    hlt
+
+menu_optionPlay:
     movq $38, %rdi
     movq $10, %rsi
     movb $'P', %dl
@@ -82,17 +319,17 @@ menu_item1:
     call putChar
     movq $38, %rdi
     movq $12, %rsi
-    movb $'Q', %dl
+    movb $'H', %dl  # TODO change to Q when poweroff implemented
     movb $4, %cl
     call putChar
     movq $39, %rdi
     movq $12, %rsi
-    movb $'u', %dl
+    movb $'a', %dl   # TODO change to u when poweroff implemented
     movb $4, %cl
     call putChar
     movq $40, %rdi
     movq $12, %rsi
-    movb $'i', %dl
+    movb $'l', %dl   # TODO change to i when poweroff implemented
     movb $4, %cl
     call putChar
     movq $41, %rdi
@@ -102,7 +339,7 @@ menu_item1:
     call putChar
     ret
 
-menu_item2:
+menu_optionQuit:
     movq $38, %rdi
     movq $10, %rsi
     movb $'P', %dl
@@ -125,17 +362,17 @@ menu_item2:
     call putChar
     movq $38, %rdi
     movq $12, %rsi
-    movb $'Q', %dl
+    movb $'H', %dl  # TODO change to Q when poweroff implemented
     movb $23, %cl
     call putChar
     movq $39, %rdi
     movq $12, %rsi
-    movb $'u', %dl
+    movb $'a', %dl   # TODO change to u when poweroff implemented
     movb $23, %cl
     call putChar
     movq $40, %rdi
     movq $12, %rsi
-    movb $'i', %dl
+    movb $'l', %dl   # TODO change to i when poweroff implemented
     movb $23, %cl
     call putChar
     movq $41, %rdi
@@ -147,12 +384,10 @@ menu_item2:
 
 handle_menu_controls:
     call readKeyCode
-	#enter check
 	cmpq $28, %rax
 	jne _handle_menu_controls_up_down
 	jmp _handle_enter
 
-#	#arrow up check
 _handle_menu_controls_up_down:
 	cmpq $72, %rax
 	je _arrow
@@ -170,27 +405,26 @@ _other_key:
 _handle_enter:
     cmpq $1, (menu_option)
     je exit
-    jmp _start
+    jmp _resume_gameInit
 	ret
 
 _select_quit:
     movq $1, (menu_option)
-    call menu_item2
+    call menu_optionQuit
     ret
 
 _select_play:
     movq $0, (menu_option)
-    call menu_item1
+    call menu_optionPlay
     ret
 
 gameInit:
     call clear_screen
     movq $0, (menu_option)
-    call menu_item1
+    call menu_optionPlay
 	ret
-
-_start:
-	#set timer to 18hz (smallest value possible)
+_resume_gameInit:
+	#   Set timer to 18hz (smallest value possible)
 	movq $65534, %rdi
 	call setTimer
 
@@ -202,12 +436,23 @@ _start:
 	movq $1, (game_state)
 	ret
 
-doNothing:
-    call handle_menu_controls
-	ret
+doMenu:
+    movq $0, (gameover_display_counter)
+    jmp handle_menu_controls
+    ret
+doGameOverScreen:
+    cmpq $5, (gameover_display_counter)
+    jle game_over
+    jmp loop_gameover_controls
+    ret
+
 gameLoop:
     cmpq $0, (game_state)
-    je doNothing
+    je doMenu
+    cmpq $2, (game_state)
+    je doGameOverScreen
+    cmpq $3, (game_state)
+    je return
 	call handle_game_controls
 	call handle_ball
 	call calculate_pad_pos
@@ -441,11 +686,12 @@ _draw_life_bars_right:
 
 # int(int life, int pos)
 life_to_color:
-	cmpq %rdi, %rsi
-	jg _life_to_color_black
 
 	cmpq $0, %rdi
-	je _life_to_color_black
+	je _goto_gameover
+	
+    cmpq %rdi, %rsi
+	jg _life_to_color_black
 
 	cmpq $2, %rsi
 	jle _life_to_color_red
@@ -460,6 +706,12 @@ life_to_color:
 	jle _life_to_color_lgreen
 
 	jmp _life_to_color_green
+
+_goto_gameover:
+	 movq (player2_life), %r13
+     movq (player1_life), %r12
+	 jmp game_over
+
 
 _life_to_color_red:
 	movb $68, %al

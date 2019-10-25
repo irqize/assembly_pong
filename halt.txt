@@ -1,0 +1,27 @@
+ #  mov     $5301, %ax
+  #  xor     %bx, %bx
+  #  int     $15
+  #
+  #  #;Try to set APM version (to 1.2)
+  #  mov     $21262, %ax
+  #  xor     %BX, %bx
+  #  mov     $0102, %cx
+  #  int     $15
+  #
+  #  #;Turn off the system
+  #  mov     $5307, %ax
+  #  mov     $0001, %bx
+  #  mov     $0003, %cx
+  #  int     $15
+   # mov     $0xa9,       %al  # 2 bytes: b0 a9
+   # mov     $0xfee1dead, %edi # 5 bytes: bf ad de e1 fe
+   # mov     $0x28121969, %esi # 5 bytes: be 69 19 12 28
+   # mov     $0x4321fedc, %edx # 5 bytes: ba dc fe 21 43
+   # syscall
+    #mov		$0, %r15
+
+ #    jmp halt
+ ####
+ #    movq $-1, %rax # set syscall code to 60? (sys_exit?)
+ #    movq $0, %rdi # set program's return code to 0 (no error)
+ #    syscall
