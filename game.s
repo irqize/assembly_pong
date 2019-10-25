@@ -48,8 +48,8 @@
 	# 1-3 going right, 4-6 going left
 	last_ball_direction: .quad 2
 
-	player1_life: .quad 11
-	player2_life: .quad 11
+	player1_life: .quad 1
+	player2_life: .quad 1
 
 	x: .quad 0
 	y: .quad 0
@@ -59,8 +59,20 @@
 
 	score_1: .byte '0'
 	score_2: .byte '0'
+	text_iter: .quad 0
+
+	go_1_len: .quad 7
+	go_2_len: .quad 5
+	instr_len: .quad 26
+	main_len: .quad 4
 
 .section .game.text
+	go_1: .asciz "Player "
+	go_2: .asciz " won!"
+	instr: .asciz "Press Enter to continue..."
+	main_1: .asciz "Play"
+	main_2: .asciz "Halt"
+
 print_score:
 	movq $12, %rdi
     movq $0, %rsi
@@ -75,166 +87,70 @@ print_score:
     call putChar
 	ret
 
+
 game_over:  #   Logic for end of the game
     movq $2, (game_state)	#
     incq (gameover_display_counter) # Display winner screen 5 times
     call clear_screen  # Writes: Player X won! \n Press Enter to continue
-    movq $34, %rdi
-    movq $10, %rsi
-    movb $'P', %dl
-    movb $23, %cl
-    call putChar
-    movq $35, %rdi
-    movq $10, %rsi
-    movb $'l', %dl
-    movb $23, %cl
-    call putChar
-    movq $36, %rdi
-    movq $10, %rsi
-    movb $'a', %dl
-    movb $23, %cl
-    call putChar
-    movq $37, %rdi
-    movq $10, %rsi
-    movb $'y', %dl
-    movb $23, %cl
-    call putChar
-    movq $38, %rdi
-    movq $10, %rsi
-    movb $'e', %dl
-    movb $23, %cl
-    call putChar
-    movq $39, %rdi
-    movq $10, %rsi
-    movb $'r', %dl
-    movb $23, %cl
-    call putChar
-    movq $40, %rdi
-    movq $10, %rsi
-    movb $' ', %dl
-    movb $23, %cl
-    call putChar
 
-    movq $28, %rdi
-    movq $12, %rsi
-    movb $'P', %dl
-    movb $23, %cl
-    call putChar
-    movq $29, %rdi
-    movq $12, %rsi
-    movb $'r', %dl
-    movb $23, %cl
-    call putChar
-    movq $30, %rdi
-    movq $12, %rsi
-    movb $'e', %dl
-    movb $23, %cl
-    call putChar
-    movq $31, %rdi
-    movq $12, %rsi
-    movb $'s', %dl
-    movb $23, %cl
-    call putChar
-    movq $32, %rdi
-    movq $12, %rsi
-    movb $'s', %dl
-    movb $23, %cl
-    call putChar
-    movq $33, %rdi
-    movq $12, %rsi
-    movb $' ', %dl
-    movb $23, %cl
-    call putChar
-    movq $34, %rdi
-    movq $12, %rsi
-    movb $'E', %dl
-    movb $23, %cl
-    call putChar
-    movq $35, %rdi
-    movq $12, %rsi
-    movb $'n', %dl
-    movb $23, %cl
-    call putChar
-    movq $36, %rdi
-    movq $12, %rsi
-    movb $'t', %dl
-    movb $23, %cl
-    call putChar
-    movq $37, %rdi
-    movq $12, %rsi
-    movb $'e', %dl
-    movb $23, %cl
-    call putChar
-    movq $38, %rdi
-    movq $12, %rsi
-    movb $'r', %dl
-    movb $23, %cl
-    call putChar
-    movq $39, %rdi
-    movq $12, %rsi
-    movb $' ', %dl
-    movb $23, %cl
-    call putChar
-    movq $40, %rdi
-    movq $12, %rsi
-    movb $'t', %dl
-    movb $23, %cl
-    call putChar
-    movq $41, %rdi
-    movq $12, %rsi
-    movb $'o', %dl
-    movb $23, %cl
-    call putChar
-    movq $42, %rdi
-    movq $12, %rsi
-    movb $' ', %dl
-    movb $23, %cl
-    call putChar
-    movq $43, %rdi
-    movq $12, %rsi
-    movb $'c', %dl
-    movb $23, %cl
-    call putChar
-    movq $44, %rdi
-    movq $12, %rsi
-    movb $'o', %dl
-    movb $23, %cl
-    call putChar
-    movq $45, %rdi
-    movq $12, %rsi
-    movb $'n', %dl
-    movb $23, %cl
-    call putChar
-    movq $46, %rdi
-    movq $12, %rsi
-    movb $'t', %dl
-    movb $23, %cl
-    call putChar
-    movq $47, %rdi
-    movq $12, %rsi
-    movb $'i', %dl
-    movb $23, %cl
-    call putChar
-    movq $48, %rdi
-    movq $12, %rsi
-    movb $'n', %dl
-    movb $23, %cl
-    call putChar
-    movq $49, %rdi
-    movq $12, %rsi
-    movb $'u', %dl
-    movb $23, %cl
-    call putChar
-    movq $50, %rdi
-    movq $12, %rsi
-    movb $'e', %dl
-    movb $23, %cl
-    call putChar
+    movq $34, (x)
+	movq $10, (y)
+
+	movq $0, %r9
+	movq $go_1, %r10
+	
+	call _go_loop
+
+	#
+	
+	movq $28, (x)
+	movq $12, (y)
+
+	movq $0, %r9
+	movq $instr, %r10
+
+	call _go_loop_2
+
+	#
 
     cmpq %r12, %r13
     jle one_won
     jmp two_won
     ret
+
+_go_loop:
+	movq (x), %rdi
+    movq (y), %rsi
+
+	movb (%r10), %dl
+
+    movb $23, %cl
+    call putChar
+
+	incq %r10
+	incq %r9
+	incq (x)
+
+	cmpq (go_1_len), %r9
+	jl _go_loop
+	ret
+
+_go_loop_2:
+	movq (x), %rdi
+    movq (y), %rsi
+
+    movb (%r10), %dl
+
+    movb $23, %cl
+    call putChar
+
+	incq %r10
+	incq %r9
+	incq (x)
+
+	cmpq (instr_len), %r9
+	jl _go_loop_2
+	ret
 
 
 two_won:
